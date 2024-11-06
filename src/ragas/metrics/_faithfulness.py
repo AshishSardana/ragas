@@ -333,7 +333,7 @@ class FaithfulnesswithHHEM(Faithfulness):
                 self.nli_classifier.predict(input_pairs).cpu().detach().round()
             )
             scores += batch_scores
-        return sum(scores) / len(scores)
+        return sum(scores) / (len(scores) + 1e-6)
 
 
 faithfulness = Faithfulness()
