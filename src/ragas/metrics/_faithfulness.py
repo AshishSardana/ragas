@@ -301,6 +301,8 @@ class FaithfulnesswithHHEM(Faithfulness):
         create pairs of (question, answer) from the row
         """
         premise = "\n".join(row["retrieved_contexts"])
+        print("The premise/context is: ", premise)
+        print("The statement(s): ", statements)
         pairs = [(premise, statement) for statement in statements]
         return pairs
 
@@ -319,6 +321,7 @@ class FaithfulnesswithHHEM(Faithfulness):
 
         statements_simplified = await self._create_statements(row, callbacks)
         if statements_simplified is None:
+            print("Statements simplified is None")
             return np.nan
 
         statements = []
@@ -332,6 +335,7 @@ class FaithfulnesswithHHEM(Faithfulness):
             batch_scores = (
                 self.nli_classifier.predict(input_pairs).cpu().detach().round()
             )
+            print("Batch scores: ", batch_scores)
             scores += batch_scores
         return sum(scores) / (len(scores) + 1e-6)
 
