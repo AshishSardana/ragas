@@ -205,6 +205,7 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.llm is not None, "llm must be set to compute score"
 
         contexts_str: str = "\n".join(row["retrieved_contexts"])
+        print("**CONTEXT_STR  IN VERDICT: ", contexts_str)
         verdicts = await self.nli_statements_message.generate(
             data=NLIStatementInput(context=contexts_str, statements=statements),
             llm=self.llm,
@@ -219,8 +220,8 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.llm is not None, "llm is not set"
         assert self.sentence_segmenter is not None, "sentence_segmenter is not set"
 
-        text, question = row["response"], row["user_input"]
-        print("**TEXT: {}\nQUESTION: {}".format(text, question))
+        text, question, context = row["response"], row["user_input"], row["retrieved_contexts"]
+        print("**TEXT: {}\nQUESTION: {}\nCONTEXT: {}".format(text, question, context))
         sentences = self.sentence_segmenter.segment(text)
         print("**SENTENCES: ", sentences)
         sentences_with_index = {
@@ -228,6 +229,7 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
             for i, sentence in enumerate(sentences)
             if sentence.strip().endswith((".", "。", "!", "！"))
         }
+        print("**SENTENCES_WITH_INDEX:", sentences_with_index)
 
         statements_simplified = await self.statement_prompt.generate(
             llm=self.llm,
@@ -266,6 +268,7 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.llm is not None, "LLM is not set"
 
         statements_simplified = await self._create_statements(row, callbacks)
+        print("**STATEMENTS_SIMPLIFIED IN _ascore: ", statements_simplified)
         if statements_simplified is None:
             return np.nan
 
@@ -273,6 +276,7 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         statements = []
         for component in statements_simplified.sentences:
             statements.extend(component.simpler_statements)
+            print("**SIMPLER STATEMENTS: ", component.simpler_statements)
 
         verdicts = await self._create_verdicts(row, statements, callbacks)
         return self._compute_score(verdicts)
