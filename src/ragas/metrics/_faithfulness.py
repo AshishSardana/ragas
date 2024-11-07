@@ -220,7 +220,9 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.sentence_segmenter is not None, "sentence_segmenter is not set"
 
         text, question = row["response"], row["user_input"]
+        print("**TEXT: {}\nQUESTION: {}".format(text, question))
         sentences = self.sentence_segmenter.segment(text)
+        print("**SENTENCES: ", sentences)
         sentences_with_index = {
             i: sentence
             for i, sentence in enumerate(sentences)
@@ -234,6 +236,7 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
             ),
             callbacks=callbacks,
         )
+        print("**STATEMENTS_SIMPLIFIED: ", statements_simplified)
         return statements_simplified
 
     def _compute_score(self, answers: NLIStatementOutput):
@@ -301,8 +304,8 @@ class FaithfulnesswithHHEM(Faithfulness):
         create pairs of (question, answer) from the row
         """
         premise = "\n".join(row["retrieved_contexts"])
-        print("The premise/context is: ", premise)
-        print("The statement(s): ", statements)
+        print("**The premise/context is: ", premise)
+        print("**The statement(s): ", statements)
         pairs = [(premise, statement) for statement in statements]
         return pairs
 
@@ -321,7 +324,7 @@ class FaithfulnesswithHHEM(Faithfulness):
 
         statements_simplified = await self._create_statements(row, callbacks)
         if statements_simplified is None:
-            print("Statements simplified is None")
+            print("**Statements simplified is None")
             return np.nan
 
         statements = []
@@ -331,6 +334,7 @@ class FaithfulnesswithHHEM(Faithfulness):
 
         scores = []
         pairs = self._create_pairs(row, statements)
+        print("**PAIRS: ", input_pairs)
         for input_pairs in self._create_batch(pairs):  # to avoid OOM
             batch_scores = (
                 self.nli_classifier.predict(input_pairs).cpu().detach().round()
