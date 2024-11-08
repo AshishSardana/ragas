@@ -338,8 +338,8 @@ class FaithfulnesswithHHEM(Faithfulness):
 
         scores = []
         pairs = self._create_pairs(row, statements)
-        print("**PAIRS: ", input_pairs)
         for input_pairs in self._create_batch(pairs):  # to avoid OOM
+            print("**PAIRS: ", input_pairs)
             batch_scores = (
                 self.nli_classifier.predict(input_pairs).cpu().detach().round()
             )
