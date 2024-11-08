@@ -205,7 +205,6 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.llm is not None, "llm must be set to compute score"
 
         contexts_str: str = "\n".join(row["retrieved_contexts"])
-        print("**CONTEXT_STR  IN VERDICT: ", contexts_str)
         verdicts = await self.nli_statements_message.generate(
             data=NLIStatementInput(context=contexts_str, statements=statements),
             llm=self.llm,
@@ -223,7 +222,6 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         text, question, context = row["response"], row["user_input"], row["retrieved_contexts"]
         print("**TEXT: {}\nQUESTION: {}\nCONTEXT: {}".format(text, question, context))
         sentences = self.sentence_segmenter.segment(text)
-        print("**SENTENCES: ", sentences)
         sentences_with_index = {
             i: sentence
             for i, sentence in enumerate(sentences)
@@ -268,7 +266,6 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         assert self.llm is not None, "LLM is not set"
 
         statements_simplified = await self._create_statements(row, callbacks)
-        print("**STATEMENTS_SIMPLIFIED IN _ascore: ", statements_simplified)
         if statements_simplified is None:
             return np.nan
 
@@ -276,7 +273,6 @@ class Faithfulness(MetricWithLLM, SingleTurnMetric):
         statements = []
         for component in statements_simplified.sentences:
             statements.extend(component.simpler_statements)
-            print("**SIMPLER STATEMENTS: ", component.simpler_statements)
 
         verdicts = await self._create_verdicts(row, statements, callbacks)
         return self._compute_score(verdicts)
@@ -308,7 +304,7 @@ class FaithfulnesswithHHEM(Faithfulness):
         create pairs of (question, answer) from the row
         """
         premise = "\n".join(row["retrieved_contexts"])
-        print("**The premise/context is: ", premise)
+        print("**The premise/context is: ", premise[:50])
         print("**The statement(s): ", statements)
         pairs = [(premise, statement) for statement in statements]
         return pairs
@@ -343,7 +339,6 @@ class FaithfulnesswithHHEM(Faithfulness):
             batch_scores = (
                 self.nli_classifier.predict(input_pairs).cpu().detach().round()
             )
-            print("Batch scores: ", batch_scores)
             scores += batch_scores
         return sum(scores) / (len(scores) + 1e-6)
 
